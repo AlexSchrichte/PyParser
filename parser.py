@@ -1,18 +1,28 @@
 import argparse, sys
+from datetime import time
 
 
-class syslogLog:
+class SyslogLog:
     #TODO: Convert msg_text to string instead of list
     def __init__(self, time, device_id, msg_num, msg_text):
-        self.time = time
+        self.timestamp = time
         self.device_id = device_id
         self.msg_num = msg_num
         self.msg_text = msg_text
         # Account for rsyslog variants that include PID after process name
         self.process = self.msg_num.split("[")[0]
 
+        dateSplit = self.timestamp.split(" ")
+        self.month = dateSplit[0]
+        self.day = dateSplit[1]
+
+        timeSplit = dateSplit[2].split(":")
+        self.hour = timeSplit[0]
+        self.minute = timeSplit[1]
+        self.second = timeSplit[2]
+
     def __str__(self):
-        return "{} {} {} {}".format(self.time, self.device_id, self.msg_num, self.msg_text)
+        return "{} {} {} {}".format(self.timestamp, self.device_id, self.msg_num, self.msg_text)
 
 # Parser setup
 parser = argparse.ArgumentParser(
@@ -33,6 +43,12 @@ parser.add_argument(
     '--summary',
     help='Report file summary information',
     action='store_true',)
+parser.add_argument(
+    '-t',
+    '--time',
+    nargs=2,
+    metavar=("TIME", "INT"),
+    help='return logs within INT minutes of TIME')
 
 args = parser.parse_args()
 
@@ -48,7 +64,7 @@ log_list = []
 for line in all_lines:
     split_line = line.split()
     # TODO: Change parsing method to regex
-    log = syslogLog(" ".join(split_line[:3]),
+    log = SyslogLog(" ".join(split_line[:3]),
                     split_line[3],
                     split_line[4],
                     " ".join(split_line[5:]))
@@ -59,27 +75,46 @@ for line in all_lines:
 # -s, --summary
 if(args.summary):
     applications = []
-    for x in log_list:
-        if ( not x.process in applications):
-            applications.append(x.process) 
+    for log in log_list:
+        if ( not log.process in applications):
+            applications.append(log.process) 
 
     print("Log timeline: {} <-> {}".format(log_list[0].time, log_list[-1].time))
     print("Line count: {}".format(len(log_list)))
     print("Applications: ")
-    for x in sorted(applications):
-        print("- {}".format(x))
+    for log in sorted(applications):
+        print("- {}".format(log))
 
 # -m, --message
 if(args.message):
-    for x in log_list:
-        if (args.message.lower() in x.msg_text.lower()) or (args.message.lower() in x.msg_num.lower()):
-            print(x)
+    for log in log_list:
+        if (args.message.lower() in log.msg_text.lower()) or (args.message.lower() in log.msg_num.lower()):
+            print(log)
 
 # -p, --process
 if(args.process):
-    for x in log_list:
-        if args.process.lower() in x.msg_num.lower():
-            print(x)
+    for log in log_list:
+        if args.process.lower() in log.msg_num.lower():
+            print(log)
+
+# -t, --time
+if(args.time):
+    dateSplit = args.time[0].split(" ")
+    month = dateSplit[0]
+    day = dateSplit[1]
+
+    timeSplit = dateSplit[2].split(":")
+    hour = timeSplit[0]
+    minute = timeSplit[1]
+    second = timeSplit[2]
+    inputTime = time(int(hour), int(minute), int(second))
+    
+    for log in log_list:
+        logTime = time(int(log.hour), int(log.minute), int(log.second))
+        # can't subtract time objects. Fix this vvv
+        print(inputTime - logTime)
+            
+
 
 
 #TODO: Implement time search by range 
