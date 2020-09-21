@@ -1,9 +1,10 @@
-import argparse, sys
+import argparse
+import sys
 from datetime import time
 
 
 class SyslogLog:
-    #TODO: Convert msg_text to string instead of list
+    # TODO: Convert msg_text to string instead of list
     def __init__(self, time, device_id, msg_num, msg_text):
         self.timestamp = time
         self.device_id = device_id
@@ -22,13 +23,15 @@ class SyslogLog:
         self.second = timeSplit[2]
 
     def __str__(self):
-        return "{} {} {} {}".format(self.timestamp, self.device_id, self.msg_num, self.msg_text)
+        return "{} {} {} {}".format(self.timestamp, self.device_id,
+                                    self.msg_num, self.msg_text)
+
 
 # Parser setup
 parser = argparse.ArgumentParser(
     description="Analyze Linux Logs")
 parser.add_argument(
-    'file', 
+    'file',
     help='File to be passed as input')
 parser.add_argument(
     '-m',
@@ -76,8 +79,8 @@ for line in all_lines:
 if(args.summary):
     applications = []
     for log in log_list:
-        if ( not log.process in applications):
-            applications.append(log.process) 
+        if (log.process not in applications):
+            applications.append(log.process)
 
     print("Log timeline: {} <-> {}".format(log_list[0].time, log_list[-1].time))
     print("Line count: {}".format(len(log_list)))
@@ -88,7 +91,8 @@ if(args.summary):
 # -m, --message
 if(args.message):
     for log in log_list:
-        if (args.message.lower() in log.msg_text.lower()) or (args.message.lower() in log.msg_num.lower()):
+        if (args.message.lower() in log.msg_text.lower()) or \
+                (args.message.lower() in log.msg_num.lower()):
             print(log)
 
 # -p, --process
@@ -99,22 +103,20 @@ if(args.process):
 
 # -t, --time
 if(args.time):
-    dateSplit = args.time[0].split(" ")
-    month = dateSplit[0]
-    day = dateSplit[1]
+    date_split = args.time[0].split(" ")
+    month = date_split[0]
+    day = date_split[1]
 
-    timeSplit = dateSplit[2].split(":")
-    hour = timeSplit[0]
-    minute = timeSplit[1]
-    second = timeSplit[2]
-    inputTime = time(int(hour), int(minute), int(second))
-    
+    time_split = date_split[2].split(":")
+    hour = time_split[0]
+    minute = time_split[1]
+    second = time_split[2]
+    input_time = time(int(hour), int(minute), int(second))
+
     for log in log_list:
-        logTime = time(int(log.hour), int(log.minute), int(log.second))
+        log_time = time(int(log.hour), int(log.minute), int(log.second))
         # can't subtract time objects. Fix this vvv
-        print(inputTime - logTime)
-            
+        print(input_time - log_time)
 
 
-
-#TODO: Implement time search by range 
+# TODO: Implement time search by range
