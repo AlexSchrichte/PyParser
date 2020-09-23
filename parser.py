@@ -66,12 +66,16 @@ except FileNotFoundError:
 log_list = []
 for line in all_lines:
     split_line = line.split()
+    # print(split_line)
     # TODO: Change parsing method to regex
-    log = SyslogLog(" ".join(split_line[:3]),
+    try:
+        log = SyslogLog(" ".join(split_line[:3]),
                     split_line[3],
                     split_line[4],
                     " ".join(split_line[5:]))
-
+    except IndexError:
+        # Short term fix for stripping journalctl header
+        continue 
     log_list.append(log)
 
 
@@ -82,7 +86,7 @@ if(args.summary):
         if (log.process not in applications):
             applications.append(log.process)
 
-    print("Log timeline: {} <-> {}".format(log_list[0].time, log_list[-1].time))
+    print("Log timeline: {} <-> {}".format(log_list[0].timestamp, log_list[-1].timestamp))
     print("Line count: {}".format(len(log_list)))
     print("Applications: ")
     for log in sorted(applications):
@@ -116,7 +120,9 @@ if(args.time):
     for log in log_list:
         log_time = time(int(log.hour), int(log.minute), int(log.second))
         # can't subtract time objects. Fix this vvv
+        # Subtraction requires datetime object. Conversion to handle only journalctl -o short-full or greater is likely
         print(input_time - log_time)
 
 
 # TODO: Implement time search by range
+# 
